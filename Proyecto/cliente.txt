@@ -1,0 +1,289 @@
+#include <gtk/gtk.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_QUESTIONS 10
+#define SERVER_IP "192.168.100.142"
+#define SERVER_PORT 8080
+
+typedef struct {
+    char question[256];
+    char options[3][256];
+    char correct_option;
+} Question;
+
+typedef struct {
+    Question questions[MAX_QUESTIONS];
+    int question_count;
+} Exam;
+
+typedef struct {
+    Question questions[MAX_QUESTIONS];
+    int current_question;
+    int score;
+    time_t start_time;
+} ExamSession;
+
+ExamSession session;
+int client_socket;
+
+gboolean on_timeout(gpointer data) {
+    time_t current_time = time(NULL);
+    double elapsed = difftime(current_time, session.start_time);
+
+    if (elapsed >= 600) { // 10 minutos
+        g_print("Tiempo agotado para la pregunta %d\n", session.current_question + 1);
+        session.current_question++;
+        if (session.current_question < MAX_QUESTIONS) {
+            session.start_time = time(NULL);
+            // Mostrar la siguiente pregunta
+        } else {
+            // Finalizar el examen
+        }
+    }
+    return TRUE;
+}
+
+void show_question() {
+    if (session.current_question < MAX_QUESTIONS) {
+        Question *q = &session.questions[session.current_question];
+        g_print("Pregunta %d: %s\n", session.current_question + 1, q->question);
+        for (int i = 0; i < 3; i++) {
+            g_print("Opción %c: %s\n", 'a' + i, q->options[i]);
+        }
+    } else {
+        g_print("Examen finalizado. Puntuación: %d\n", session.score);
+    }
+}
+
+void start_exam(Exam *exam) {
+    session.current_question = 0;
+    session.score = 0;
+    session.start_time = time(NULL);
+    memcpy(session.questions, exam->questions, sizeof(session.questions));
+
+    // Configurar el temporizador
+    g_timeout_add_seconds(1, on_timeout, NULL);
+
+    // Mostrar la primera pregunta
+    show_question();
+}
+
+void read_exam_from_server(int socket_fd, Exam *exam) {
+    char buffer[1024];
+    int n;
+    exam->question_count = 0;
+
+    while ((n = read(socket_fd, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[n] = '\0'; // Asegúrate de que los datos estén terminados con '\0'
+
+        // Verifica si el servidor indica el final del examen
+        if (strstr(buffer, "END_EXAM") != NULL) {
+            break; // Salir del bucle cuando termine el examen
+        }
+
+        if (exam->question_count < MAX_QUESTIONS) {
+            Question *q = &exam->questions[exam->question_count];
+
+            // Leer la pregunta
+            strncpy(q->question, buffer, sizeof(q->question) - 1);
+
+            // Leer opciones
+            for (int i = 0; i < 3; i++) {
+                n = read(socket_fd, buffer, sizeof(buffer) - 1);
+                buffer[n] = '\0';
+                strncpy(q->options[i], buffer, sizeof(q->options[i]) - 1);
+            }
+
+            // Leer la respuesta correcta
+            n = read(socket_fd, buffer, sizeof(buffer) - 1);
+            buffer[n] = '\0';
+            q->correct_option = buffer[0];
+
+            // Incrementar el contador de preguntas
+            exam->question_count++;
+
+            // Imprimir depuración (opcional)
+            printf("Pregunta %d recibida: %s\n", exam->question_count, q->question);
+        }
+    }
+    printf("Examen recibido con %d preguntas.\n", exam->question_count);
+}
+
+void on_exam_button_clicked(GtkWidget *widget, gpointer data) {
+    const char *exam_name = (const char *)data;
+    g_print("Examen seleccionado: %s\n", exam_name);
+
+    // Enviar solicitud de examen al servidor
+    if (write(client_socket, exam_name, strlen(exam_name)) < 0) {
+        perror("Error escribiendo en el socket");
+        return;
+    }
+
+    // Leer preguntas del examen del servidor
+    Exam exam;
+    exam.question_count = 0;
+    char buffer[256];
+    int n;
+    while ((n = read(client_socket, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[n] = '\0';
+        if (exam.question_count < MAX_QUESTIONS) {
+            Question *q = &exam.questions[exam.question_count];
+            strncpy(q->question, buffer, sizeof(q->question) - 1);
+            for (int i = 0; i < 3; i++) {
+                n = read(client_socket, buffer, sizeof(buffer) - 1);
+                buffer[n] = '\0';
+                strncpy(q->options[i], buffer, sizeof(q->options[i]) - 1);
+            }
+            n = read(client_socket, buffer, sizeof(buffer) - 1);
+            buffer[n] = '\0';
+            q->correct_option = buffer[0];
+            exam.question_count++;
+        }
+    }
+
+    start_exam(&exam);
+}
+
+void show_exam_menu() {
+    GtkWidget *window;
+    GtkWidget *grid;
+    GtkWidget *math_button;
+    GtkWidget *spanish_button;
+    GtkWidget *english_button;
+
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window), "Seleccionar Examen");
+    gtk_container_set_border_width(GTK_CONTAINER(window), 10);
+
+    grid = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(window), grid);
+
+    math_button = gtk_button_new_with_label("Matemáticas");
+    g_signal_connect(math_button, "clicked", G_CALLBACK(on_exam_button_clicked), "Matemáticas");
+    gtk_grid_attach(GTK_GRID(grid), math_button, 0, 0, 1, 1);
+
+    spanish_button = gtk_button_new_with_label("Español");
+    g_signal_connect(spanish_button, "clicked", G_CALLBACK(on_exam_button_clicked), "Español");
+    gtk_grid_attach(GTK_GRID(grid), spanish_button, 0, 1, 1, 1);
+
+    english_button = gtk_button_new_with_label("Inglés");
+    g_signal_connect(english_button, "clicked", G_CALLBACK(on_exam_button_clicked), "Inglés");
+    gtk_grid_attach(GTK_GRID(grid), english_button, 0, 2, 1, 1);
+
+    gtk_widget_show_all(window);
+}
+
+void on_login_button_clicked(GtkWidget *widget, gpointer data) {
+    GtkWidget **entries = (GtkWidget **)data;
+    const char *matricula = gtk_entry_get_text(GTK_ENTRY(entries[0]));
+    const char *password = gtk_entry_get_text(GTK_ENTRY(entries[1]));
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "%s,%s", matricula, password);
+
+    // Enviar credenciales al servidor
+    if (write(client_socket, buffer, strlen(buffer)) < 0) {
+        perror("Error escribiendo en el socket");
+        return;
+    }
+
+    // Leer respuesta del servidor
+    int n = read(client_socket, buffer, sizeof(buffer) - 1);
+    if (n < 0) {
+        perror("Error leyendo del socket");
+        return;
+    }
+    buffer[n] = '\0';
+
+    if (strstr(buffer, "Autenticación exitosa")) {
+        show_exam_menu();
+    } else {
+        g_print("Autenticación fallida\n");
+    }
+}
+
+void create_login_window() {
+    GtkWidget *window;
+    GtkWidget *grid;
+    GtkWidget *matricula_entry;
+    GtkWidget *password_entry;
+    GtkWidget *login_button;
+    GtkWidget *entries[2];
+
+    gtk_init(NULL, NULL);
+
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window), "Login");
+    gtk_container_set_border_width(GTK_CONTAINER(window), 10);
+
+    grid = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(window), grid);
+
+    matricula_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(matricula_entry), "Matricula");
+    gtk_grid_attach(GTK_GRID(grid), matricula_entry, 0, 0, 1, 1);
+
+    password_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(password_entry), "Password");
+    gtk_entry_set_visibility(GTK_ENTRY(password_entry), FALSE);
+    gtk_grid_attach(GTK_GRID(grid), password_entry, 0, 1, 1, 1);
+
+    entries[0] = matricula_entry;
+    entries[1] = password_entry;
+
+    login_button = gtk_button_new_with_label("Login");
+    g_signal_connect(login_button, "clicked", G_CALLBACK(on_login_button_clicked), entries);
+    gtk_grid_attach(GTK_GRID(grid), login_button, 0, 2, 1, 1);
+
+    gtk_widget_show_all(window);
+    gtk_main();
+}
+
+int main(int argc, char *argv[]) {
+    struct sockaddr_in server_addr;
+
+    // Crear el socket del cliente
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_socket < 0) {
+        perror("Error abriendo el socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Configurar la dirección del servidor
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_IP); // Dirección IP del servidor
+    server_addr.sin_port = htons(SERVER_PORT);          // Puerto del servidor
+
+    // Conectar al servidor
+    if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Error conectando al servidor");
+        close(client_socket);
+        exit(EXIT_FAILURE);
+    }
+    printf("Conexión establecida con el servidor %s:%d\n", SERVER_IP, SERVER_PORT);
+
+    // Ventana de inicio de sesión
+    create_login_window();
+
+    // Una vez completado el login y seleccionado el examen, iniciar la comunicación
+    Exam exam; // Estructura para almacenar el examen
+    memset(&exam, 0, sizeof(Exam));
+
+    // Leer el examen desde el servidor después de seleccionar
+    printf("Esperando recibir preguntas del servidor...\n");
+    read_exam_from_server(client_socket, &exam);
+
+    // Iniciar el examen una vez recibido
+    printf("Examen recibido. Iniciando...\n");
+    start_exam(&exam);
+
+    // Cerrar el socket al finalizar
+    close(client_socket);
+    printf("Conexión cerrada.\n");
+
+    return 0;
+}
