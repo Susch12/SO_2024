@@ -1,0 +1,20 @@
+Español|Identifica el enunciado en el que la función de la lengua es poética.|a) Era apenas una niña cuando la vi por primera vez.|b) A las tres en punto moriría un transeúnte.|c) Las nieves del tiempo platearon mi sien.|c 
+Español|Enunciado que ejemplifica la función referencial de la lengua.|a) ¡Qué lata con esta lluvia!|b) Seguirán las lluvias en el noreste del país.|c) Hoy llueve mucho, y pareciera que están lavando el mundo.|b 
+Español|Identifica el sujeto de la siguiente oración. Los científicos hallaron los huesos de un dinosaurio y algunos restos de otras especies.|a) Los huesos.|b) Los científicos.|c) Los restos.|b 
+Español|Elige la opción que contiene el predicado.|a) Compró la computadora.|b) Las pirámides de Teotihuacán.|c) Hoy, mañana y siempre.|a 
+Español|¿Qué es una metáfora?|a) Una figura literaria que compara dos elementos sin usar "como".|b) Un texto que cuenta hechos reales o ficticios en orden cronológico.|c) Una palabra que imita el sonido de lo que describe.|a
+Español|Selecciona la opción que presenta un sujeto tácito o implícito.|a) Somos nada frente a la muerte infausta.|b) Feliz aquél que busca a Dios en sí mismo.|c) ¡Señor!, tiembla mi alma ante tu grandeza.|a 
+Español|Selecciona el sinónimo de la palabra en mayúsculas. Marta veía los VESTIGIOS de un papel consumido por las llamas.|a) Pedazos.|b) Rezos.|c) Signos.|a 
+Español|Antónimo de VOCIFERAR.|a) Omitir.|b) Silenciar.|c) Gruñir.|b 
+Español|Cardumen es a pez como:|a) Piara a enjambre.|b) Gente a persona.|c) Rebaño a oveja.|c 
+Español|Selecciona la opción que completa la siguiente analogía. La hélice es al helicóptero lo que…|a) Las alas son al colibrí|b) Los cuernos son al ciervo.|c) Las patas son a la jirafa.|a
+Español|Identifica el enunciado que ejemplifica la función expresiva de la lengua.|a) La obra de arte quedó expuesta en el museo.|b) ¡Qué hermoso es este atardecer!|c) El libro fue publicado en 1995.|b
+Español|Enunciado que ejemplifica la función apelativa de la lengua.|a) Estudia para el examen.|b) El sol se oculta en el horizonte.|c) Este lugar es perfecto para descansar.|a
+Español|Identifica el complemento directo de la siguiente oración: Marta comió una deliciosa pizza.|a) Marta.|b) Comió.|c) Una deliciosa pizza.|c
+Español|Selecciona el verbo de la siguiente oración: "Ella estudia con mucho esfuerzo para sus exámenes."|a) Ella.|b) Estudia.|c) Mucho.|b
+Español|Elige el adjetivo en la siguiente oración: "La casa grande tiene un jardín hermoso."|a) Casa.|b) Grande.|c) Tiene.|b
+Español|Selecciona el enunciado que contiene una oración subordinada adjetiva.|a) El perro que vi en el parque es muy amigable.|b) Estaba lloviendo cuando llegué a casa.|c) Me siento cansado.|a
+Español|Selecciona el antónimo de la palabra ENORME.|a) Pequeño.|b) Grande.|c) Grandeza.|a
+Español|¿Cuál es el sinónimo de la palabra ENREDADO?|a) Ordenado.|b) Deshecho.|c) Confuso.|c
+Español|Selecciona la opción que completa la analogía: El sol es a día como la luna es a...|a) Noche.|b) Cielo.|c) Estrella.|a
+Español|¿Qué tipo de oración es "Si llueve, no iremos al parque"?|a) Simple.|b) Subordinada adjetiva.|c) Subordinada condicional.|c
