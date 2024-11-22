@@ -350,7 +350,6 @@ int main() {
             pthread_detach(thread_id); // Separar el hilo para que se limpie automáticamente al terminar
         }
     }
-
     close(server_socket);
     return 0;
 }
